@@ -1,0 +1,1659 @@
+{
+  "uid": "plumb-categories",
+  "title": "Category Detail",
+  "description": "Drill from category to subcategory to subdivision. Each selector narrows the next, so Subdivision only lists what the chosen subcategories contain. Trend against its own average, how often versus how much, where it happens, and how purchases are spread.",
+  "tags": [
+    "plumb"
+  ],
+  "editable": true,
+  "timezone": "browser",
+  "time": {
+    "from": "now-1y",
+    "to": "now"
+  },
+  "timepicker": {},
+  "refresh": "",
+  "fiscalYearStartMonth": 0,
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": true,
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "query": {
+          "datasource": {
+            "name": "-- Grafana --"
+          },
+          "group": "grafana",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0"
+        },
+        "datasource": {
+          "name": "-- Grafana --"
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Accounts",
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "type": "query",
+        "query": "SELECT name FROM accounts ORDER BY name",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "plumb-pg"
+        },
+        "refresh": 1,
+        "sort": 0,
+        "regex": ""
+      },
+      {
+        "name": "category",
+        "label": "Category",
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "type": "query",
+        "query": "SELECT name FROM categories WHERE parent_id IS NULL ORDER BY name",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "plumb-pg"
+        },
+        "refresh": 1,
+        "sort": 0,
+        "regex": ""
+      },
+      {
+        "name": "subcategory",
+        "label": "Subcategory",
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "type": "query",
+        "query": "SELECT DISTINCT roll2 FROM v_spending WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) ORDER BY 1",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "plumb-pg"
+        },
+        "refresh": 2,
+        "sort": 0,
+        "regex": ""
+      },
+      {
+        "name": "subdivision",
+        "label": "Subdivision",
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "type": "query",
+        "query": "SELECT DISTINCT roll3 FROM v_spending WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) ORDER BY 1",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "plumb-pg"
+        },
+        "refresh": 2,
+        "sort": 0,
+        "regex": ""
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Spending",
+      "description": "Spending in the current selection over the range.",
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT sum(outflow) AS \"Total\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Number Transactions",
+      "description": "",
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Transactions\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Share of Spending",
+      "description": "What portion of all spending in range this selection accounts for.",
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(100.0 * sum(outflow) FILTER (WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[])))\n             / nullif(sum(outflow), 0), 1) AS \"Share\"\nFROM v_spending\nWHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Monthly Spend vs. Average",
+      "description": "The flat line is the average of the months shown, so every bar reads as above or below your own normal.",
+      "gridPos": {
+        "h": 9,
+        "w": 11,
+        "x": 9,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 17,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average month"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": []
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH monthly AS (\n    SELECT date_trunc('month', posted_on) AS month, sum(outflow) AS spend\n    FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\n    GROUP BY 1\n)\nSELECT (month::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       spend AS \"Spend\",\n       round(avg(spend) OVER (), 2) AS \"Average month\"\nFROM monthly ORDER BY 1"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Average Transaction",
+      "description": "Mean size of a single purchase here.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#ad46ff",
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(avg(outflow), 2) AS \"Average\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Subcategories",
+      "description": "Anything tagged only at the top level shows as \"(unspecified)\", so the bars still add up to the total.",
+      "gridPos": {
+        "h": 13,
+        "w": 9,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#73BF69",
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 2,
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayLabels": [],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "percent",
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT roll2 AS subcategory, sum(outflow) AS spend\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 2 DESC LIMIT 25",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Median transaction",
+      "description": "Half of purchases are smaller than this. An average well above it means a few large purchases carry the selection.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY outflow)::numeric, 2)\n           AS \"Median\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Average Month",
+      "description": "Divided by the months that actually have data in range.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(sum(outflow)\n             / nullif(count(DISTINCT date_trunc('month', posted_on)), 0), 2)\n           AS \"Average month\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Transactions per month",
+      "description": "How often, as opposed to how much.",
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 9,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 19,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false,
+          "values": []
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT (date_trunc('month', posted_on)::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       count(*) AS \"Transactions\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Average Transaction Size",
+      "description": "Rising here with a flat count is a price change, not a habit change.",
+      "gridPos": {
+        "h": 7,
+        "w": 14,
+        "x": 0,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false,
+          "values": []
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT (date_trunc('month', posted_on)::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       round(avg(outflow), 2) AS \"Average transaction\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 12,
+      "type": "piechart",
+      "title": "Subdivisions",
+      "description": "The deepest level. \"(unspecified)\" means the transaction was tagged higher up the tree than this.",
+      "gridPos": {
+        "h": 14,
+        "w": 10,
+        "x": 14,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#73BF69",
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 2,
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "percent",
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT roll3 AS subdivision, sum(outflow) AS spend\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 2 DESC LIMIT 25",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 13,
+      "type": "barchart",
+      "title": "Average & Total by Weekday",
+      "description": "Average purchase size and total per weekday.",
+      "gridPos": {
+        "h": 7,
+        "w": 14,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 85,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "vertical",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": -45,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT to_char(posted_on, 'Dy')   AS day,\n       round(avg(outflow), 2) AS \"Average transaction\",\n       round(sum(outflow), 2) AS \"Total\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1, extract(isodow FROM posted_on)\nORDER BY extract(isodow FROM posted_on)"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Month by Month",
+      "description": "",
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 31
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Total|Average|Smallest|Largest"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT to_char(date_trunc('month', posted_on), 'YYYY-MM') AS \"Month\",\n       count(*)               AS \"Transactions\",\n       sum(outflow)           AS \"Total\",\n       round(avg(outflow), 2) AS \"Average\",\n       min(outflow)           AS \"Smallest\",\n       max(outflow)           AS \"Largest\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1 DESC"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 11,
+      "type": "geomap",
+      "title": "Categories Geographically",
+      "description": "The selected categories only, so you can see where one kind of spending happens. Markers are sized and shaded by total spend; a place is one marker however often you go. Only transactions carrying coordinates appear.",
+      "gridPos": {
+        "h": 19,
+        "w": 12,
+        "x": 12,
+        "y": 31
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Basemap",
+          "noRepeat": false,
+          "type": "maplibre"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "blur": 15,
+              "radius": 5,
+              "weight": {
+                "fixed": 1,
+                "max": 1,
+                "min": 0
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Heatmap",
+            "opacity": 0.4,
+            "tooltip": true,
+            "type": "heatmap"
+          },
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "field": "spend",
+                  "fixed": "dark-blue"
+                },
+                "opacity": 0.75,
+                "rotation": {
+                  "field": "",
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "field": "spend",
+                  "fixed": 6,
+                  "max": 10,
+                  "min": 5
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "latitude": "latitude",
+              "longitude": "longitude",
+              "mode": "coords"
+            },
+            "name": "Spending",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "dashboardVariable": false,
+          "id": "north-america",
+          "lat": 40,
+          "lon": -100,
+          "noRepeat": false,
+          "padding": 15,
+          "zoom": 4
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT l.latitude,\n       l.longitude,\n       coalesce(mode() WITHIN GROUP (ORDER BY v.merchant),\n                max(l.label), 'Unknown') AS place,\n       max(l.city)       AS city,\n       sum(v.outflow)    AS spend,\n       count(*)          AS visits,\n       max(l.popularity) AS popularity\nFROM v_spending v\nJOIN locations l ON l.id = v.location_id\nWHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\n  AND l.latitude IS NOT NULL\n  AND l.longitude IS NOT NULL\nGROUP BY l.id, l.latitude, l.longitude\nORDER BY spend DESC"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 14,
+      "type": "histogram",
+      "title": "Transaction Size Spread",
+      "description": "How purchases are distributed, which an average hides: two clusters mean two different habits sharing one category.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "bucketOffset": 0,
+        "combine": false,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT outflow AS \"Transaction\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Merchants",
+      "description": "",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Total|Average"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT coalesce(merchant, '(no merchant yet)') AS \"Merchant\",\n       count(*)               AS \"Visits\",\n       sum(outflow)           AS \"Total\",\n       round(avg(outflow), 2) AS \"Average\",\n       to_char(max(posted_on), 'YYYY-MM-DD') AS \"Last seen\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 3 DESC LIMIT 25"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 17,
+      "type": "table",
+      "title": "Largest Transactions",
+      "description": "",
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Amount"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT to_char(posted_on, 'YYYY-MM-DD') AS \"Date\",\n       account     AS \"Account\",\n       coalesce(merchant, description) AS \"Merchant\",\n       coalesce(category_path, 'Uncategorized') AS \"Category\",\n       outflow     AS \"Amount\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nORDER BY outflow DESC LIMIT 30"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    }
+  ]
+}

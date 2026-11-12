@@ -1,0 +1,31 @@
+# Chase credit card CSV export.
+# Header: Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+# Chase already writes purchases as negative, which matches this schema.
+name: chase_credit
+
+account:
+  name: Chase Sapphire
+  type: Credit
+  institution: Chase
+  last4: "4321"
+
+csv:
+  encoding: utf-8-sig
+  delimiter: ","
+  skip_rows: 0
+
+columns:
+  posted_on: Post Date
+  transacted_on: Transaction Date
+  description: Description
+  memo: Memo
+  amount: Amount
+  # external_id: null   # Chase gives no stable id, so a hash is derived
+
+date_format:
+  - "%m/%d/%Y"
+  - "%Y-%m-%d"
+
+amount:
+  mode: signed
+  flip_sign: false

@@ -1,0 +1,64 @@
+# The minimal ledger shape: one file covering several accounts, with a
+# signed amount, a running balance, and a full category path. No merchant
+# column and no location columns.
+#
+# Header:
+#   posted,description,amount,balance,account,category tree
+#
+# The amount MUST already be signed here - negative for money out,
+# positive for money in. With no Direction column and no debit/credit
+# pair, the sign is the only thing in the file that says which way the
+# money went. If your export puts purchases in as positive, set
+# flip_sign below rather than editing the CSV.
+name: ledger
+
+# Used for rows whose account column is blank, and as the fallback type
+# for an account this file introduces that is not listed below.
+#
+# This account is created whether or not any row needs it, so name it
+# after one you really have - otherwise you get an empty "Checking"
+# sitting in your account list. To clear one out later:
+#   DELETE FROM accounts WHERE name = 'Checking'
+#    AND NOT EXISTS (SELECT 1 FROM transactions
+#                     WHERE account_id = accounts.id);
+account:
+  name: Checking
+  type: Checking
+
+# Name every account the file mentions. An unlisted name gets its type
+# guessed from the text, and the guess is wrong for most card names -
+# "Chase Sapphire" looks like a checking account to a keyword match.
+# Names are matched exactly and case-sensitively, so keep the spelling
+# consistent or you will get two accounts for one.
+account_types:
+  Checking: Checking
+  Savings: Savings
+  # Credit Card: Credit
+  # Brokerage: Investment
+
+csv:
+  encoding: utf-8-sig        # tolerates a leading BOM; harmless without one
+  delimiter: ","
+
+columns:
+  posted_on: posted
+  description: description
+  amount: amount
+  balance: balance           # becomes transactions.statement_balance,
+                             # which is what `make reconcile` compares
+  account: account           # per-row account, so one file spans accounts
+  category: "category tree"  # quoted: the header has a space in it
+
+date_format:
+  - "%Y-%m-%d"               # 2026-10-14
+  - "%m/%d/%Y"               # 10/14/2026
+  - "%m/%d/%y"
+
+amount:
+  mode: signed
+  # flip_sign: true          # if purchases arrive positive
+
+category:
+  separator: ">"             # "Food > Groceries" walks or builds the path
+  parent: Imported           # only used for a bare leaf name with no path
+  on_unknown: create

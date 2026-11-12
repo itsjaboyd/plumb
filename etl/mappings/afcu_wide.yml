@@ -1,0 +1,70 @@
+# The wide export: one row carries the transaction, its merchant, and the
+# merchant's address and coordinates. Nothing here needs code - every
+# column below is a setting.
+#
+# Header:
+#   Posted,Description,Category,Direction,Amount,Balance,Account,Merchant,
+#   Address,City,State,Zip,Country,Latitude,Longitude,Popularity
+name: afcu_wide
+
+# Used only for rows with a blank Account, and as the fallback type for
+# accounts this file introduces.
+account:
+  name: AFCU Checking
+  type: Checking
+  institution: AFCU
+
+account_types:
+  AFCU Checking: Checking
+  AFCU Savings: Savings
+  AFCU Visa Classic: Credit
+
+csv:
+  encoding: utf-8-sig          # the file starts with a BOM
+  delimiter: ","
+
+columns:
+  posted_on: Posted
+  description: Description
+  category: Category
+  direction: Direction         # Withdraw / Deposit / Transfer / Receive
+  amount: Amount               # unsigned; Direction supplies the sign
+  balance: Balance
+  account: Account             # per-row, so one file spans accounts
+
+  merchant: Merchant           # a real name, so no id reconciliation needed
+  # The same column also names the place. This matters: locations are
+  # matched by proximity AND name, so two different businesses a few
+  # metres apart stay separate instead of merging.
+  place: Merchant
+
+  address: Address
+  city: City
+  state: State
+  zip: Zip
+  country: Country             # "United States" is normalised to US
+  latitude: Latitude
+  longitude: Longitude
+  # A score from the location API. It describes the place, so it is
+  # stored on the locations row - once per storefront, not once per
+  # payment - and refreshed if a later row carries a newer value.
+  popularity: Popularity
+
+date_format:
+  - "%m/%d/%y"                 # 1/18/20
+  - "%m/%d/%Y"
+  - "%Y-%m-%d"
+
+amount:
+  mode: direction
+
+location:
+  precision: 6
+  match_radius_m: 25
+  swap_lat_lon: false
+  drop_zero_zero: true
+
+category:
+  separator: ">"
+  parent: Imported
+  on_unknown: create

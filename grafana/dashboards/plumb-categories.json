@@ -1,0 +1,2223 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "plumb-categories"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "builtIn": true,
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "query": {
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "group": "grafana",
+            "kind": "DataQuery",
+            "spec": {},
+            "version": "v0"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "description": "Drill from category to subcategory to subdivision. Each selector narrows the next, so Subdivision only lists what the chosen subcategories contain. Trend against its own average, how often versus how much, where it happens, and how purchases are spread.",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT sum(outflow) AS \"Total\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Spending in the current selection over the range.",
+          "id": 1,
+          "links": [],
+          "title": "Total Spending",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "time_series",
+                        "rawQuery": true,
+                        "rawSql": "SELECT (date_trunc('month', posted_on)::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       count(*) AS \"Transactions\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "How often, as opposed to how much.",
+          "id": 10,
+          "links": [],
+          "title": "Transactions per month",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-RdYlGr",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 19,
+                    "gradientMode": "opacity",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "always",
+                    "showValues": false,
+                    "spanNulls": true,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "short"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "hidden",
+                  "placement": "right",
+                  "showLegend": false,
+                  "values": []
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT l.latitude,\n       l.longitude,\n       coalesce(mode() WITHIN GROUP (ORDER BY v.merchant),\n                max(l.label), 'Unknown') AS place,\n       max(l.city)       AS city,\n       sum(v.outflow)    AS spend,\n       count(*)          AS visits,\n       max(l.popularity) AS popularity\nFROM v_spending v\nJOIN locations l ON l.id = v.location_id\nWHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\n  AND l.latitude IS NOT NULL\n  AND l.longitude IS NOT NULL\nGROUP BY l.id, l.latitude, l.longitude\nORDER BY spend DESC"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "The selected categories only, so you can see where one kind of spending happens. Markers are sized and shaded by total spend; a place is one marker however often you go. Only transactions carrying coordinates appear.",
+          "id": 11,
+          "links": [],
+          "title": "Categories Geographically",
+          "vizConfig": {
+            "group": "geomap",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-BlYlRd"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "basemap": {
+                  "config": {},
+                  "name": "Basemap",
+                  "noRepeat": false,
+                  "type": "maplibre"
+                },
+                "controls": {
+                  "mouseWheelZoom": true,
+                  "showAttribution": true,
+                  "showDebug": false,
+                  "showMeasure": false,
+                  "showScale": false,
+                  "showZoom": true
+                },
+                "layers": [
+                  {
+                    "config": {
+                      "blur": 15,
+                      "radius": 5,
+                      "weight": {
+                        "fixed": 1,
+                        "max": 1,
+                        "min": 0
+                      }
+                    },
+                    "location": {
+                      "mode": "auto"
+                    },
+                    "name": "Heatmap",
+                    "opacity": 0.4,
+                    "tooltip": true,
+                    "type": "heatmap"
+                  },
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "field": "spend",
+                          "fixed": "dark-blue"
+                        },
+                        "opacity": 0.75,
+                        "rotation": {
+                          "field": "",
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "field": "spend",
+                          "fixed": 6,
+                          "max": 10,
+                          "min": 5
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        },
+                        "symbolAlign": {
+                          "horizontal": "center",
+                          "vertical": "center"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 0,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "location": {
+                      "latitude": "latitude",
+                      "longitude": "longitude",
+                      "mode": "coords"
+                    },
+                    "name": "Spending",
+                    "tooltip": true,
+                    "type": "markers"
+                  }
+                ],
+                "tooltip": {
+                  "mode": "details"
+                },
+                "view": {
+                  "allLayers": true,
+                  "dashboardVariable": false,
+                  "id": "north-america",
+                  "lat": 40,
+                  "lon": -100,
+                  "noRepeat": false,
+                  "padding": 15,
+                  "zoom": 4
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-12": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT roll3 AS subdivision, sum(outflow) AS spend\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 2 DESC LIMIT 25",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "The deepest level. \"(unspecified)\" means the transaction was tagged higher up the tree than this.",
+          "id": 12,
+          "links": [],
+          "title": "Subdivisions",
+          "vizConfig": {
+            "group": "piechart",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "fixedColor": "#73BF69",
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  },
+                  "decimals": 2,
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "table",
+                  "placement": "right",
+                  "showLegend": true,
+                  "values": [
+                    "percent",
+                    "value"
+                  ]
+                },
+                "pieType": "donut",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "sort": "desc",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-13": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT to_char(posted_on, 'Dy')   AS day,\n       round(avg(outflow), 2) AS \"Average transaction\",\n       round(sum(outflow), 2) AS \"Total\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1, extract(isodow FROM posted_on)\nORDER BY extract(isodow FROM posted_on)"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Average purchase size and total per weekday.",
+          "id": 13,
+          "links": [],
+          "title": "Average & Total by Weekday",
+          "vizConfig": {
+            "group": "barchart",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 85,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 0,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "barRadius": 0,
+                "barWidth": 0.7,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "orientation": "vertical",
+                "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": -45,
+                "xTickLabelSpacing": 0
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT outflow AS \"Transaction\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "How purchases are distributed, which an average hides: two clusters mean two different habits sharing one category.",
+          "id": 14,
+          "links": [],
+          "title": "Transaction Size Spread",
+          "vizConfig": {
+            "group": "histogram",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 0,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    }
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "bucketOffset": 0,
+                "combine": false,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-15": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT to_char(date_trunc('month', posted_on), 'YYYY-MM') AS \"Month\",\n       count(*)               AS \"Transactions\",\n       sum(outflow)           AS \"Total\",\n       round(avg(outflow), 2) AS \"Average\",\n       min(outflow)           AS \"Smallest\",\n       max(outflow)           AS \"Largest\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1 DESC"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 15,
+          "links": [],
+          "title": "Month by Month",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "Total|Average|Smallest|Largest"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "zebraStriping": false
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-16": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT coalesce(merchant, '(no merchant yet)') AS \"Merchant\",\n       count(*)               AS \"Visits\",\n       sum(outflow)           AS \"Total\",\n       round(avg(outflow), 2) AS \"Average\",\n       to_char(max(posted_on), 'YYYY-MM-DD') AS \"Last seen\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 3 DESC LIMIT 25"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 16,
+          "links": [],
+          "title": "Merchants",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "Total|Average"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "zebraStriping": false
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-17": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT to_char(posted_on, 'YYYY-MM-DD') AS \"Date\",\n       account     AS \"Account\",\n       coalesce(merchant, description) AS \"Merchant\",\n       coalesce(category_path, 'Uncategorized') AS \"Category\",\n       outflow     AS \"Amount\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nORDER BY outflow DESC LIMIT 30"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 17,
+          "links": [],
+          "title": "Largest Transactions",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": "Amount"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "zebraStriping": false
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT count(*) AS \"Transactions\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 2,
+          "links": [],
+          "title": "Number Transactions",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "none"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT round(avg(outflow), 2) AS \"Average\" FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Mean size of a single purchase here.",
+          "id": 3,
+          "links": [],
+          "title": "Average Transaction",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "fixedColor": "#ad46ff",
+                    "mode": "thresholds"
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY outflow)::numeric, 2)\n           AS \"Median\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Half of purchases are smaller than this. An average well above it means a few large purchases carry the selection.",
+          "id": 4,
+          "links": [],
+          "title": "Median transaction",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT round(sum(outflow)\n             / nullif(count(DISTINCT date_trunc('month', posted_on)), 0), 2)\n           AS \"Average month\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Divided by the months that actually have data in range.",
+          "id": 5,
+          "links": [],
+          "title": "Average Month",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT round(100.0 * sum(outflow) FILTER (WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[])))\n             / nullif(sum(outflow), 0), 1) AS \"Share\"\nFROM v_spending\nWHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[]))"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "What portion of all spending in range this selection accounts for.",
+          "id": 6,
+          "links": [],
+          "title": "Share of Spending",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "decimals": 1,
+                  "max": 100,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "percent"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "time_series",
+                        "rawQuery": true,
+                        "rawSql": "WITH monthly AS (\n    SELECT date_trunc('month', posted_on) AS month, sum(outflow) AS spend\n    FROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\n    GROUP BY 1\n)\nSELECT (month::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       spend AS \"Spend\",\n       round(avg(spend) OVER (), 2) AS \"Average month\"\nFROM monthly ORDER BY 1"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "The flat line is the average of the months shown, so every bar reads as above or below your own normal.",
+          "id": 7,
+          "links": [],
+          "title": "Monthly Spend vs. Average",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 17,
+                    "gradientMode": "scheme",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 2,
+                    "pointSize": 3,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": true,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 40
+                      },
+                      {
+                        "color": "red",
+                        "value": 60
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Average month"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.drawStyle",
+                        "value": "line"
+                      },
+                      {
+                        "id": "custom.lineWidth",
+                        "value": 2
+                      },
+                      {
+                        "id": "custom.fillOpacity",
+                        "value": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "values": []
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT roll2 AS subcategory, sum(outflow) AS spend\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 2 DESC LIMIT 25",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Anything tagged only at the top level shows as \"(unspecified)\", so the bars still add up to the total.",
+          "id": 8,
+          "links": [],
+          "title": "Subcategories",
+          "vizConfig": {
+            "group": "piechart",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "fixedColor": "#73BF69",
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  },
+                  "decimals": 2,
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "displayLabels": [],
+                "legend": {
+                  "displayMode": "table",
+                  "placement": "right",
+                  "showLegend": true,
+                  "values": [
+                    "percent",
+                    "value"
+                  ]
+                },
+                "pieType": "donut",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "sort": "desc",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "plumb-pg"
+                      },
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "time_series",
+                        "rawQuery": true,
+                        "rawSql": "SELECT (date_trunc('month', posted_on)::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       round(avg(outflow), 2) AS \"Average transaction\"\nFROM v_spending WHERE $__timeFilter(\"time\") AND (array_length(ARRAY[${account:sqlstring}]::text[], 1) IS NULL OR account = ANY(ARRAY[${account:sqlstring}]::text[])) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) AND (array_length(ARRAY[${subdivision:sqlstring}]::text[], 1) IS NULL OR roll3 = ANY(ARRAY[${subdivision:sqlstring}]::text[]))\nGROUP BY 1 ORDER BY 1"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Rising here with a flat count is a price change, not a habit change.",
+          "id": 9,
+          "links": [],
+          "title": "Average Transaction Size",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "bars",
+                    "fillOpacity": 70,
+                    "gradientMode": "hue",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": true,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "currencyUSD"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "hidden",
+                  "placement": "right",
+                  "showLegend": false,
+                  "values": []
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.3.0"
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              },
+              "height": 4,
+              "width": 3,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              },
+              "height": 4,
+              "width": 3,
+              "x": 3,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              },
+              "height": 4,
+              "width": 3,
+              "x": 6,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              },
+              "height": 9,
+              "width": 11,
+              "x": 9,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              },
+              "height": 4,
+              "width": 4,
+              "x": 20,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              },
+              "height": 13,
+              "width": 9,
+              "x": 0,
+              "y": 4
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              },
+              "height": 4,
+              "width": 4,
+              "x": 20,
+              "y": 4
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              },
+              "height": 4,
+              "width": 4,
+              "x": 20,
+              "y": 8
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-10"
+              },
+              "height": 8,
+              "width": 11,
+              "x": 9,
+              "y": 9
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              },
+              "height": 7,
+              "width": 14,
+              "x": 0,
+              "y": 17
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-12"
+              },
+              "height": 14,
+              "width": 10,
+              "x": 14,
+              "y": 17
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-13"
+              },
+              "height": 7,
+              "width": 14,
+              "x": 0,
+              "y": 24
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-15"
+              },
+              "height": 15,
+              "width": 12,
+              "x": 0,
+              "y": 31
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-11"
+              },
+              "height": 19,
+              "width": 12,
+              "x": 12,
+              "y": 31
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-14"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 0,
+              "y": 46
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-16"
+              },
+              "height": 9,
+              "width": 12,
+              "x": 12,
+              "y": 50
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-17"
+              },
+              "height": 15,
+              "width": 12,
+              "x": 0,
+              "y": 54
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    },
+    "preload": false,
+    "tags": [
+      "plumb"
+    ],
+    "timeSettings": {
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "fiscalYearStartMonth": 0,
+      "from": "now-1y",
+      "hideTimepicker": false,
+      "timezone": "browser",
+      "to": "now"
+    },
+    "title": "Category Detail",
+    "variables": [
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "All"
+            ],
+            "value": [
+              "$__all"
+            ]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "label": "Accounts",
+          "multi": true,
+          "name": "account",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "plumb-pg"
+            },
+            "group": "grafana-postgresql-datasource",
+            "kind": "DataQuery",
+            "spec": {
+              "__legacyStringValue": "SELECT name FROM accounts ORDER BY name"
+            },
+            "version": "v0"
+          },
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "disabled"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "All"
+            ],
+            "value": [
+              "$__all"
+            ]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "label": "Category",
+          "multi": true,
+          "name": "category",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "plumb-pg"
+            },
+            "group": "grafana-postgresql-datasource",
+            "kind": "DataQuery",
+            "spec": {
+              "__legacyStringValue": "SELECT name FROM categories WHERE parent_id IS NULL ORDER BY name"
+            },
+            "version": "v0"
+          },
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "disabled"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "All"
+            ],
+            "value": [
+              "$__all"
+            ]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "label": "Subcategory",
+          "multi": true,
+          "name": "subcategory",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "plumb-pg"
+            },
+            "group": "grafana-postgresql-datasource",
+            "kind": "DataQuery",
+            "spec": {
+              "__legacyStringValue": "SELECT DISTINCT roll2 FROM v_spending WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) ORDER BY 1"
+            },
+            "version": "v0"
+          },
+          "refresh": "onTimeRangeChanged",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "disabled"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": [
+              "All"
+            ],
+            "value": [
+              "$__all"
+            ]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "label": "Subdivision",
+          "multi": true,
+          "name": "subdivision",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "plumb-pg"
+            },
+            "group": "grafana-postgresql-datasource",
+            "kind": "DataQuery",
+            "spec": {
+              "__legacyStringValue": "SELECT DISTINCT roll3 FROM v_spending WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR roll1 = ANY(ARRAY[${category:sqlstring}]::text[])) AND (array_length(ARRAY[${subcategory:sqlstring}]::text[], 1) IS NULL OR roll2 = ANY(ARRAY[${subcategory:sqlstring}]::text[])) ORDER BY 1"
+            },
+            "version": "v0"
+          },
+          "refresh": "onTimeRangeChanged",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "disabled"
+        }
+      }
+    ]
+  }
+}

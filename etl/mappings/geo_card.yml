@@ -1,0 +1,38 @@
+# A card export that carries coordinates per transaction, which is the
+# shape this project's map panels are built for.
+# Header: Date,Description,Amount,Latitude,Longitude,Place,City,State,Postal
+name: geo_card
+
+account:
+  name: Geo Card
+  type: Credit
+  institution: Example Bank
+  last4: "5150"
+
+csv:
+  encoding: utf-8-sig
+  delimiter: ","
+
+columns:
+  posted_on: Date
+  description: Description
+  amount: Amount
+  latitude: Latitude
+  longitude: Longitude
+  place: Place
+  city: City
+  state: State
+  zip: Postal
+
+date_format:
+  - "%Y-%m-%d"
+
+location:
+  precision: 6
+  match_radius_m: 25
+  swap_lat_lon: false
+  drop_zero_zero: true
+
+amount:
+  mode: signed
+  flip_sign: false

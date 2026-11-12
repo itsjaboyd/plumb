@@ -1,0 +1,1215 @@
+{
+  "uid": "plumb-budget",
+  "title": "Budget",
+  "description": "Where the budget stands today and where it is heading. There is no month selector here on purpose: an envelope balance is a running total, so \"what was in the fund last March\" is a curiosity, while \"what is in it now and will it cover the next bill\" is the question. For how a closed month went against budget, use the budget strip on Monthly Review. Accounts are not a filter either - a budget belongs to a category, whichever card paid.",
+  "tags": [
+    "plumb"
+  ],
+  "editable": true,
+  "timezone": "browser",
+  "time": {
+    "from": "now-1y",
+    "to": "now+6M"
+  },
+  "timepicker": {},
+  "refresh": "",
+  "fiscalYearStartMonth": 0,
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": true,
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "query": {
+          "datasource": {
+            "name": "-- Grafana --"
+          },
+          "group": "grafana",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0"
+        },
+        "datasource": {
+          "name": "-- Grafana --"
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "category",
+        "label": "Categories",
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "type": "query",
+        "query": "SELECT DISTINCT category FROM v_budget_months ORDER BY 1",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "plumb-pg"
+        },
+        "refresh": 1,
+        "sort": 0,
+        "regex": ""
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Budgeted",
+      "description": "The current month's accrued budget for the selected categories.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "noValue": "no plan",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT sum(budget) AS \"Budgeted\"\nFROM v_budget_status WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Spent",
+      "description": "Spending so far this month in those categories and their descendants.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 5,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "noValue": "no plan",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT sum(spent) AS \"Spent\"\nFROM v_budget_status WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Pace",
+      "description": "Spending so far, stretched over the whole month, as a share of budget. 100% means you are exactly on track to spend the budget; 130% means you are heading 30% over if the rest of the month looks like the start of it. Jumpy in the first few days, by design - it is a projection.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 10,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "noValue": "no plan",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 95
+              },
+              {
+                "color": "red",
+                "value": 105
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH s AS (\n    SELECT coalesce(sum(spent), 0) AS spent, sum(budget) AS budget\n    FROM v_budget_status WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\n)\nSELECT round(100.0 * (spent / (extract(day FROM current_date) / extract(day FROM date_trunc('month', current_date) + interval '1 month - 1 day')))\n             / nullif(budget, 0), 1) AS \"Pace\"\nFROM s"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Envelope Total",
+      "description": "Total set aside across every carry-forward category - the money that should be sitting there waiting for periodic bills.",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 15,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "noValue": "none set",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT sum(envelope_balance) AS \"In envelopes\"\nFROM v_budget_status WHERE carry_forward AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Underfunded",
+      "description": "Envelopes that ran dry this month: the accrued money was spent past, and the shortfall was forgiven rather than carried as a deficit. The most actionable number on this dashboard - it is the month an envelope failed to cover what it was for. A balance can no longer go negative, so this, not a minus sign, is the warning.",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "none set",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN count(*) = 0 THEN NULL\n            ELSE count(*) FILTER (WHERE envelope_shortfall > 0) END\n           AS \"Underfunded\"\nFROM v_budget_status WHERE carry_forward AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 6,
+      "type": "bargauge",
+      "title": "Budget Used",
+      "description": "Monthly categories only - the ones judged on the month alone. Amber past 80% of budget, red past 100%. The bar is capped at 150% so one blown category does not flatten the rest; the number beside it is the real figure.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "max": 150,
+          "min": 0,
+          "noValue": "no plan",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "textMode": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT category AS metric, pct_used AS value\nFROM v_budget_status\nWHERE NOT carry_forward AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\nORDER BY pct_used DESC NULLS LAST"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Envelopes",
+      "description": "Carry-forward categories, worst first. Per period is the bill itself; Monthly is what it accrues at. Balance is the fund as of this month, and Months covered is how many months of accrual that balance represents - under 1 on a bill due soon is the thing to act on. A negative balance means you are behind.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Per period|Monthly|Spent this month"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Balance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Months covered"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "green",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT s.category          AS \"Category\",\n       s.period            AS \"Period\",\n       m.plan_amount       AS \"Per period\",\n       s.budget            AS \"Monthly\",\n       s.spent             AS \"Spent this month\",\n       s.envelope_balance  AS \"Balance\",\n       s.months_of_cover   AS \"Months covered\"\nFROM v_budget_status s\nJOIN v_budget_months m ON m.category_id = s.category_id\n                      AND m.month = s.month\nWHERE s.carry_forward AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR s.category = ANY(ARRAY[${category:sqlstring}]::text[]))\nORDER BY s.envelope_balance ASC NULLS FIRST"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Month's Pace",
+      "description": "Spending this month adding up day by day, against a straight line to the month's total budget. Above the line means you are ahead of pace. The spending series stops at today rather than running flat to the month end. An EXISTS test picks the budgeted transactions so a transaction cannot be counted twice when a category and its parent both have plans.",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Budget pace"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": []
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH days AS (\n    SELECT generate_series(date_trunc('month', current_date)::date,\n                           (date_trunc('month', current_date)::date + interval '1 month - 1 day')::date,\n                           interval '1 day')::date AS d\n), plan AS (\n    SELECT coalesce(sum(budget), 0) AS budget\n    FROM v_budget_status WHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\n), daily AS (\n    SELECT v.posted_on AS d, sum(v.outflow) AS amt\n    FROM v_spending v\n    WHERE date_trunc('month', v.posted_on)::date = date_trunc('month', current_date)::date\n      AND EXISTS (SELECT 1 FROM v_budget_status s\n                   WHERE s.category_id = ANY(v.category_id_path)\n                     AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR s.category = ANY(ARRAY[${category:sqlstring}]::text[])))\n    GROUP BY 1\n), run AS (\n    SELECT days.d,\n           sum(coalesce(daily.amt, 0)) OVER (ORDER BY days.d) AS cumulative,\n           plan.budget\n    FROM days\n    CROSS JOIN plan\n    LEFT JOIN daily ON daily.d = days.d\n)\nSELECT (d::timestamp AT TIME ZONE 'America/Denver') AS \"time\",\n       CASE WHEN d <= current_date THEN cumulative END AS \"Spent so far\",\n       round(budget * extract(day FROM d) / extract(day FROM date_trunc('month', current_date) + interval '1 month - 1 day'), 2) AS \"Budget pace\"\nFROM run\nORDER BY 1"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Budget Versus Spending",
+      "description": "Bars are what you spent, the line is what the plans accrued, summed over the selected categories. Months past today are budget with no spending yet - that is the plan reaching forward, not a collapse.",
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Budget"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": []
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH m AS (\n    SELECT (month::timestamp AT TIME ZONE 'America/Denver') AS t,\n           category, spent, budget\n    FROM v_budget_vs_actual\n)\nSELECT t AS \"time\", sum(spent) AS \"Spent\", sum(budget) AS \"Budget\"\nFROM m\nWHERE $__timeFilter(t) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\nGROUP BY 1\nORDER BY 1"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Worst Months",
+      "description": "The monthly categories that went furthest over, worst first. Envelope categories are left out because a single month over accrual is normal for them - the Envelopes table is where they are judged.",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Budget|Spent"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Over/under"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH m AS (\n    SELECT (month::timestamp AT TIME ZONE 'America/Denver') AS t,\n           to_char(month, 'YYYY-MM') AS label,\n           category, budget, spent, variance\n    FROM v_budget_vs_actual\n    WHERE NOT carry_forward\n)\nSELECT label AS \"Month\", category AS \"Category\",\n       budget AS \"Budget\", spent AS \"Spent\", variance AS \"Over/under\"\nFROM m\nWHERE $__timeFilter(t) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\nORDER BY variance ASC\nLIMIT 12"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Envelopes Over Time",
+      "description": "Each envelope's balance month by month: climbing while it accrues, dropping when the bill lands. Below zero is underfunded. The months past today assume no further spending, so the forward slope is the best case - a bill due next month is not subtracted until it is actually charged.",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "last"
+          ]
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH m AS (\n    SELECT (month::timestamp AT TIME ZONE 'America/Denver') AS t,\n           category, envelope_balance\n    FROM v_budget_vs_actual\n    WHERE carry_forward\n)\nSELECT t AS \"time\", category AS metric, envelope_balance AS value\nFROM m\nWHERE $__timeFilter(t) AND (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR category = ANY(ARRAY[${category:sqlstring}]::text[]))\nORDER BY 1, 2"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Budget Plan History",
+      "description": "Every row you have ever loaded, newest first per category - the audit trail for what you changed and when. A blank Per period is a deliberate stop: budgeting for that category ends from that month. Opening balance seeds an envelope, or re-baselines it to the real fund balance.",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Per period|Monthly|Opening balance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "zebraStriping": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "plumb-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT c.name AS \"Category\",\n       to_char(p.valid_from, 'YYYY-MM') AS \"From\",\n       p.amount AS \"Per period\",\n       p.period AS \"Period\",\n       round(p.amount / budget_period_months(p.period), 2) AS \"Monthly\",\n       CASE WHEN p.carry_forward THEN 'yes' ELSE 'no' END AS \"Rolls over\",\n       p.opening_balance AS \"Opening balance\",\n       coalesce(p.note, '') AS \"Note\"\nFROM budget_plans p\nJOIN categories c ON c.id = p.category_id\nWHERE (array_length(ARRAY[${category:sqlstring}]::text[], 1) IS NULL OR c.name = ANY(ARRAY[${category:sqlstring}]::text[]))\nORDER BY c.name, p.valid_from DESC"
+        }
+      ],
+      "links": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "plumb-pg"
+      }
+    }
+  ]
+}

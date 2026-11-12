@@ -1,0 +1,6 @@
+posted,description,amount,balance,account,category tree
+2026-10-02,PAYROLL DIRECT DEP,3250.00,8420.11,Checking,Income > Salary
+2026-10-03,KING SOOPERS #1234,-142.87,8277.24,Checking,Food > Groceries
+2026-10-07,SHELL OIL 574,-52.10,1947.90,Credit Card,Transportation > Fuel
+2026-10-09,TRANSFER TO SAVINGS,-500.00,7777.24,Checking,Transfer
+2026-10-09,TRANSFER FROM CHECKING,500.00,12500.00,Savings,Transfer

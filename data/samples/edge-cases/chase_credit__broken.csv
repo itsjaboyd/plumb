@@ -1,0 +1,4 @@
+Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+10/20/2026,10/21/2026,GOOD ROW,Groceries,Sale,-10.00,
+10/21/2026,,MISSING POST DATE,Groceries,Sale,-11.00,
+10/22/2026,10/23/2026,BAD AMOUNT,Groceries,Sale,not-a-number,

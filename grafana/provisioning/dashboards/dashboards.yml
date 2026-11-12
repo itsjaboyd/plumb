@@ -1,0 +1,16 @@
+apiVersion: 1
+
+providers:
+  - name: Plumb
+    orgId: 1
+    folder: Plumb
+    type: file
+    disableDeletion: false
+    # Edits made in the Grafana UI are overwritten from disk on reload.
+    # Use "Save as" for experiments, or export the JSON back into
+    # grafana/dashboards/ to keep a change.
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

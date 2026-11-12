@@ -1,0 +1,22 @@
+apiVersion: 1
+
+datasources:
+  - name: Plumb
+    uid: plumb-pg
+    # Grafana 10+ id for PostgreSQL. Older versions use plain "postgres".
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: ${PLUMB_DB_HOST}
+    user: ${PLUMB_DB_USER}
+    database: ${PLUMB_DB_NAME}
+    isDefault: true
+    editable: false
+    secureJsonData:
+      password: ${PLUMB_DB_PASSWORD}
+    jsonData:
+      sslmode: disable          # traffic never leaves the compose network
+      postgresVersion: 1600
+      timescaledb: false
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400

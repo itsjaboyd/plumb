@@ -1,0 +1,51 @@
+# A ledger-style export: one file, several accounts, unsigned amounts, and
+# a Direction column that says which way the money went.
+#
+# Header (note the padded spaces, which are stripped on read):
+#   Posted,Description,Subdivision,Direction, Amount , Balance ,Account,
+#   Merchant ID,Location ID
+name: afcu_ledger
+
+# Used only for rows whose Account column is blank, and as the fallback
+# account type for accounts this file introduces.
+account:
+  name: AFCU Checking
+  type: Checking
+  institution: AFCU
+
+# Accounts this file may mention, and what they are. Anything not listed
+# is guessed from its name and the guess is printed, so a wrong one is
+# visible rather than silent.
+account_types:
+  AFCU Checking: Checking
+  AFCU Savings: Savings
+  AFCU Visa Classic: Credit
+
+csv:
+  encoding: utf-8-sig        # the file starts with a BOM
+  delimiter: ","
+
+columns:
+  posted_on: Posted
+  description: Description
+  category: Subdivision      # their leaf category name
+  direction: Direction       # Withdraw / Deposit / Transfer / Receive
+  amount: Amount             # unsigned; Direction supplies the sign
+  balance: Balance
+  account: Account           # per-row account, so one file spans accounts
+  merchant_ref: Merchant ID  # the source system's own id, kept as-is
+  location_ref: Location ID
+
+date_format:
+  - "%m/%d/%y"               # 1/15/20
+  - "%m/%d/%Y"
+  - "%Y-%m-%d"
+
+amount:
+  mode: direction
+  # direction_map: {"xfer out": Transfer}   # only for unusual wording
+
+category:
+  separator: ">"             # "Food > Groceries" would build the path
+  parent: Imported           # bare leaf names land here until re-parented
+  on_unknown: create

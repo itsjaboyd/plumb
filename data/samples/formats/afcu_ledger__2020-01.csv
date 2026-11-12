@@ -1,0 +1,12 @@
+﻿Posted,Description,Subdivision,Direction, Amount , Balance ,Account,Merchant ID,Location ID
+1/02/20,"PAYROLL DIRECT DEPOSIT CR LIGHTING",Salary,Deposit,"$2,450.00","$2,842.00","AFCU Checking",,
+1/15/20,"ONLINE BANKING FUNDS TRANSFER TO VISA CREDIT","AFCU Visa Classic Payment",Transfer,$32.61,$360.39,"AFCU Checking",28,
+1/15/20,"ONLINE BANKING FUNDS TRANSFER FROM CHECKING","AFCU Visa Classic Payment",Receive,$32.61,$-127.44,"AFCU Visa Classic",28,
+1/18/20,"VISA-01/16 AMZN MKTP US * U74PU3PH3 AMZN.COM/BILL WA 0163","Amazon Shopping",Withdraw,$11.71,$348.68,"AFCU Checking",25,12
+1/20/20,"KING SOOPERS 0056 DENVER CO",Groceries,Withdraw,$84.02,$264.66,"AFCU Visa Classic",33,14
+1/22/20,"TRANSFER TO SAVINGS","Savings Contribution",Transfer,$100.00,$164.66,"AFCU Checking",,
+1/23/20,"TRANSFER FROM CHECKING","Savings Contribution",Receive,$100.00,"$1,100.00","AFCU Savings",,
+1/25/20,"VISA-01/24 APPLE.COM/US 800-676-2775 CA 02308 7","Apple App Store",Withdraw,$200.00,$122.18,"AFCU Checking",36,16
+1/28/20,"INTEREST PAID",Interest,Deposit,$0.42,"$1,100.42","AFCU Savings",,
+1/30/20,"REFUND AMZN MKTP US","Amazon Shopping",Deposit,$11.71,$133.89,"AFCU Checking",25,12
+1/31/20,"MYSTERY ROW","Unknown Thing",Sideways,$5.00,$128.89,"AFCU Checking",,

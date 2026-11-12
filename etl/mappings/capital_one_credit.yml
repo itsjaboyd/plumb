@@ -1,0 +1,29 @@
+# Capital One credit card CSV export.
+# Header: Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit
+# Two separate columns instead of one signed one: Debit means money out,
+# so it is stored negative.
+name: capital_one_credit
+
+account:
+  name: Capital One Venture
+  type: Credit
+  institution: Capital One
+  last4: "7712"
+
+csv:
+  encoding: utf-8-sig
+  delimiter: ","
+
+columns:
+  posted_on: Posted Date
+  transacted_on: Transaction Date
+  description: Description
+
+date_format:
+  - "%Y-%m-%d"
+  - "%m/%d/%Y"
+
+amount:
+  mode: debit_credit
+  debit_column: Debit
+  credit_column: Credit

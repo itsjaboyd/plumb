@@ -1,0 +1,98 @@
+# Plumb: PostgreSQL + Grafana + a one-shot ETL container.
+#
+#   docker compose up -d            start db + grafana
+#   docker compose run --rm etl ... run the importer (see Makefile)
+#
+# Nothing is published to 0.0.0.0: the ports below bind to localhost only,
+# so the database and dashboard are not reachable from your network.
+#
+# RUNNING MORE THAN ONE STACK on the same machine: set
+# COMPOSE_PROJECT_NAME and the two ports in each copy's .env. Everything
+# below that could collide is keyed off the project name - volumes,
+# network, container names and the ETL image - so two stacks share
+# nothing. See "Running more than one stack" in the README.
+
+name: ${COMPOSE_PROJECT_NAME:-plumb}
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-plumb}-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plumb}
+      POSTGRES_USER: ${POSTGRES_USER:-plumb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Read by db/init/10-grafana-role.sh on first boot only.
+      GRAFANA_DB_USER: ${GRAFANA_DB_USER:-grafana_reader}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:?set GRAFANA_DB_PASSWORD in .env}
+      TZ: ${TZ:-America/Denver}
+      PGTZ: ${TZ:-America/Denver}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Runs only when the data volume is empty (first boot).
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-plumb} -d ${POSTGRES_DB:-plumb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  grafana:
+    # Pinned deliberately: take a backup before bumping, and expect
+    # provisioned dashboards to be migrated to the newer schema on load.
+    image: grafana/grafana:13.3.0
+    container_name: ${COMPOSE_PROJECT_NAME:-plumb}-grafana
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      # Consumed by grafana/provisioning/datasources/postgres.yml
+      PLUMB_DB_HOST: db:5432
+      PLUMB_DB_NAME: ${POSTGRES_DB:-plumb}
+      PLUMB_DB_USER: ${GRAFANA_DB_USER:-grafana_reader}
+      PLUMB_DB_PASSWORD: ${GRAFANA_DB_PASSWORD}
+      TZ: ${TZ:-America/Denver}
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  # Not a long-running service. `docker compose run --rm etl <args>` executes
+  # one command and exits; `profiles` keeps `up` from starting it.
+  etl:
+    build: ./etl
+    image: ${COMPOSE_PROJECT_NAME:-plumb}-etl:local
+    container_name: ${COMPOSE_PROJECT_NAME:-plumb}-etl
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-plumb}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-plumb}
+      # `plumb migrate` re-asserts Grafana's read-only login from these on
+      # every run, so changing the password in .env is enough - the db/init
+      # script only ever runs on the database's first boot.
+      GRAFANA_DB_USER: ${GRAFANA_DB_USER:-grafana_reader}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:?set GRAFANA_DB_PASSWORD in .env}
+      TZ: ${TZ:-America/Denver}
+    volumes:
+      - ./data:/data
+      - ./db/migrations:/app/migrations:ro
+      - ./etl/mappings:/app/mappings:ro
+
+volumes:
+  db_data:
+  grafana_data:

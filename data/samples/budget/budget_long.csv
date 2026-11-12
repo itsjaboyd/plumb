@@ -1,0 +1,9 @@
+category,effective_from,amount,period,carry_forward,opening_balance,note
+Food,2026-01,800,monthly,no,,groceries and eating out
+Housing,2026-01,1500,monthly,no,,rent and utilities
+Transportation,2026-01,200,monthly,no,,
+Entertainment,2026-01,250,monthly,no,,
+Personal,2026-01,100,monthly,no,,
+Health,2026-01,1200,annual,yes,400,insurance premium each February
+Financial,2026-01,600,semiannual,yes,,accountant twice a year
+Transportation,2026-06,250,monthly,no,,raised after the commute changed

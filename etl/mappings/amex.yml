@@ -1,0 +1,29 @@
+# American Express CSV export.
+# Header: Date,Description,Card Member,Account #,Amount,Extended Details,Category
+# Amex writes CHARGES AS POSITIVE - the opposite of this schema - so
+# flip_sign inverts every row. This is the single most common cause of
+# "my spending chart is upside down", which is why it is one setting.
+name: amex
+
+account:
+  name: Amex Gold
+  type: Credit
+  institution: American Express
+  last4: "1009"
+
+csv:
+  encoding: utf-8-sig
+  delimiter: ","
+
+columns:
+  posted_on: Date
+  description: Description
+  memo: Extended Details
+  amount: Amount
+
+date_format:
+  - "%m/%d/%Y"
+
+amount:
+  mode: signed
+  flip_sign: true

@@ -1,0 +1,28 @@
+# Chase checking CSV export.
+# Header: Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #
+# Withdrawals are already negative. The running balance is kept so you can
+# reconcile against the statement.
+name: chase_checking
+
+account:
+  name: Chase Checking
+  type: Checking
+  institution: Chase
+  last4: "8899"
+
+csv:
+  encoding: utf-8-sig
+  delimiter: ","
+
+columns:
+  posted_on: Posting Date
+  description: Description
+  amount: Amount
+  balance: Balance
+
+date_format:
+  - "%m/%d/%Y"
+
+amount:
+  mode: signed
+  flip_sign: false

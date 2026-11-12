@@ -1,0 +1,114 @@
+# Copy this file to add a bank. The only hard question is how the bank
+# expresses direction of money; the three modes below cover every export
+# format I have come across.
+#
+#   plumb mappings                   # list and validate every mapping
+#   head -3 data/inbox/yourfile.csv   # see the real header names
+name: my_bank
+
+account:
+  name: My Bank Checking      # must be unique; created on first import
+  type: Checking              # Checking Savings Credit Investment Loan
+                              # Cash Retirement Crypto Other
+  institution: My Bank
+  last4: "1234"               # last four digits only, never the full number
+  currency: USD
+
+csv:
+  encoding: utf-8-sig         # utf-8-sig strips the BOM Excel likes to add
+  delimiter: ","
+  skip_rows: 0                # junk lines above the header row
+
+columns:
+  posted_on: Posted Date      # required
+  transacted_on: Trans Date   # optional: when you actually swiped
+  description: Description
+  memo: Notes                 # optional, appended to the description
+  amount: Amount              # required for 'signed' and 'magnitude_with_type'
+  balance: Balance            # optional running balance
+  external_id: Reference      # optional; if absent a stable hash is derived
+  status: Status              # optional, paired with pending_values below
+  direction: Direction        # required for amount.mode: direction
+  account: Account            # per-row account, for ledgers spanning accounts
+  category: Subdivision       # a category name, or a path with the separator
+  merchant: Merchant          # a merchant NAME
+  merchant_ref: Merchant ID   # or the source system's own id (see below)
+  location_ref: Location ID
+  tax: Sales Tax              # included in amount
+  discount: Discount          # already applied to amount
+
+  # ---- where it happened (all optional) ------------------------------
+  # Either one combined column...
+  coordinates: Location       # "39.7392, -104.9903"
+  # ...or two separate ones (never both):
+  # latitude: Latitude
+  # longitude: Longitude
+  place: Merchant Location    # a name for the spot, shown in map tooltips
+  popularity: Popularity      # a score from a location API, stored on the
+                              # location row rather than the transaction
+  address: Street
+  city: City
+  state: State
+  zip: Postal Code
+  country: Country            # defaults to US
+
+date_format:                  # tried in order
+  - "%m/%d/%Y"
+  - "%Y-%m-%d"
+
+pending_values: ["pending", "authorized"]
+
+location:
+  precision: 6                # decimals stored; 6 keeps the full reading
+  match_radius_m: 25          # a reading within 25 m of a known place IS that
+                              # place. This is what absorbs GPS jitter, so one
+                              # storefront stays one row. Raise it for big
+                              # parking lots, lower it for dense blocks; 0
+                              # means exact coordinates only.
+  swap_lat_lon: false         # some exports print them the wrong way round
+  drop_zero_zero: true        # treat 0,0 as "no fix", which is how most
+                              # exports spell a missing reading
+
+# Accounts this file may mention, and what each one is. Anything not
+# listed is guessed from its name, and the guess is printed when the
+# account is created so a wrong one is visible rather than silent.
+account_types:
+  My Bank Checking: Checking
+  My Bank Visa: Credit
+
+category:
+  separator: ">"              # "Food > Groceries" walks/creates the path
+  parent: Imported            # bare leaf names land here until re-parented
+  on_unknown: create          # create | error | ignore
+
+amount:
+  # ---- mode: direction ----------------------------------------------
+  # An unsigned amount plus a column saying which way it went. The four
+  # canonical directions are Withdraw, Deposit, Transfer and Receive;
+  # Transfer and Receive mark money moving between your OWN accounts, so
+  # those rows are excluded from spending and income automatically.
+  # Common synonyms (debit, credit, withdrawal, transfer in/out, ...) are
+  # understood already; direction_map is only for unusual wording.
+  # mode: direction
+  # direction_map:
+  #   "xfer out": Transfer
+  #   "xfer in": Receive
+
+  # ---- mode: signed -------------------------------------------------
+  # One column, already signed. Set flip_sign if the bank writes
+  # purchases as positive (Amex does).
+  mode: signed
+  flip_sign: false
+
+  # ---- mode: debit_credit -------------------------------------------
+  # Two columns; whichever is filled decides direction.
+  # mode: debit_credit
+  # debit_column: Debit        # money out -> stored negative
+  # credit_column: Credit      # money in  -> stored positive
+
+  # ---- mode: magnitude_with_type ------------------------------------
+  # One unsigned column plus a type column that says which way it went.
+  # mode: magnitude_with_type
+  # type_column: Transaction Type
+  # debit_values: ["DEBIT", "WITHDRAWAL", "PAYMENT", "FEE"]
+  # credit_values: ["CREDIT", "DEPOSIT"]   # empty = anything else is a credit
